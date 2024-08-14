@@ -1,0 +1,20 @@
+{
+    "TOKEN" : "",
+    "SELLIX_API_KEY": "",
+    
+    "PRODUCT_DIR": "product.json",
+    "EXCLUDED_DIR": "excluded.json",
+    "TICKET_DIR": "tickets.json",
+
+    "VOUCH_CHANNEL_ID": 123456789,
+    "OWNER_ID": 123456789,
+    "REPLACE_CHANNEL_ID": 123456789,
+    "TICKET_CATEGORY_ID": 123456789,
+    
+    "SHOP_LINK": "nitroseller0.mysellix.io",
+    "IMAGE_URL": "https://cdn.discordapp.com/attachments/1259444344222515231/1259577938920341504/lv_0_20240707234905.gif",
+    "THUMBNAIL_URL": "https://cdn.discordapp.com/avatars/1259085968774795324/36fbecac0d889750053b223695812dce.webp",
+    "FOOTER": "Powered By .gg/bestnitro",
+    "BOT_STATUS": ".gg/bestnitro",
+    "EMBED_COLOR": "#FC87C4"
+}
