@@ -5,7 +5,7 @@
 A Discord bot for managing digital product warranties, automating replacement requests, and tracking customer reviews and vouches. Ideal for sellers on platforms like Sellix to ease after-sales support. The bot will check if the user vouched in the right format (+rep @ownerid quantity product price), if they made a 5 star review on the shop and if the warranty expired. It includes an auto warranty duration scrapper using product title, the warranty duration is of course customisable in products.json
     <br />
     <br />
-    <a href="https://discord.gg/bestnitro">💬 Discord</a>
+    <a href="https://discord.cyberious.xyz">💬 Discord</a>
     ·
     <a href="https://github.com/sexfrance/Warranty-Bot#-changelog">📜 ChangeLog</a>
     ·
