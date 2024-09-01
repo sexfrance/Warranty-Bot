@@ -37,6 +37,7 @@ A Discord bot for managing digital product warranties, automating replacement re
 - Customizable, if you manually changed a warranty duration in json it will not update it while scrapping
 - Can add excluded product ids for the warranty scrapper in excluded.json
 - Everything in config.json is customizable and changable using the .set command
+- Transcribe the replace ticket!
 - And more!
 
 #### Commands
@@ -49,6 +50,7 @@ A Discord bot for managing digital product warranties, automating replacement re
 - 🧹 `.warr` - Displays an embed with the warranty duration of all products
 - 🔧 `.set <setting> <value>` - Set various bot configurations. Use `.set help` for details
 - 🔎 `.check_warr <user> <order_id>` - Checks if the user has vouched, left a web review, and if their warranty has not expired
+- ⚙️ `.transcribe <user>` - Transcribes the dm of any user
 ---
 #### 📹 Preview
 
@@ -67,6 +69,9 @@ A Discord bot for managing digital product warranties, automating replacement re
 ```diff
 v0.0.1 ⋮ 08/14/2024
 ! Initial release
+
+v0.0.1 ⋮ 00/1/2024
+! Added ticket transcription
 ```
 
 ---
