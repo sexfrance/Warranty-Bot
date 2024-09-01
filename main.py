@@ -4,6 +4,8 @@ import json
 import os
 import requests
 import re
+import chat_exporter
+import io
 
 # ----- From imports ----- #
 from datetime import datetime, timedelta, timezone
@@ -144,14 +146,14 @@ class ReplaceModal(Modal):
                 if not vouch_found and not five_star_review:
                     error_embed = create_embed("Action Required", f"You did not vouch or leave a 5-star review on Sellix. Please do both within 24 hours to activate your warranty:\n\n"
                                                                    f"1. **Vouch** with the following message in the designated channel:\n"
-                                                                   f"```+rep <@{config['OWNER_ID']}> {quantity} {product_title} ${total_price}```\n"
+                                                                   f"```+rep <@{config['OWNER_ID']}> {product_title} {quantity}x ${total_price}```\n"
                                                                    f"2. **Leave a 5-star review** [here](https://{config['SHOP_LINK']}/invoice/{order_id})", discord.Color.red())
                     await interaction.followup.send(embed=error_embed, ephemeral=True)
                     return
                 elif not vouch_found:
                     error_embed = create_embed("Vouch Required", f"You left a 5-star review on Sellix, but did not vouch in the proper format. "
                                                                  f"Please vouch with the following message within 24 hours to activate your warranty:\n\n"
-                                                                 f"```+rep <@{config['OWNER_ID']}> {quantity} {product_title} ${total_price}```", discord.Color.red())
+                                                                 f"```+rep <@{config['OWNER_ID']}> {product_title} {quantity}x ${total_price}```\n", discord.Color.red())
                     await interaction.followup.send(embed=error_embed, ephemeral=True)
                     return
                 elif not five_star_review:
@@ -411,6 +413,29 @@ async def stock(ctx, product: str = None, file: discord.Attachment = None):
 
 @bot.command()
 @is_admin_or_owner()
+async def transcribe(ctx, user: discord.User = None):
+    try:
+        if not user:
+            await ctx.send(embed=create_embed("Error", "You must mention a user to transcribe their DMs. Usage: `.transcribe @user`", discord.Color.red()))
+            return
+        
+        dm_channel = user.dm_channel
+        if dm_channel is None:
+            dm_channel = await user.create_dm()
+        transcript = await chat_exporter.export(dm_channel, limit=100)
+
+        if transcript is None:
+            await ctx.send(embed=create_embed("Error", "Could not export the chat. No messages found or an error occurred.", discord.Color.red()))
+            return
+
+        transcript_file = discord.File(io.BytesIO(transcript.encode()), filename=f"{user.name}_transcript.html")
+        await ctx.send(file=transcript_file)
+
+    except Exception as e:
+        await ctx.send(embed=create_embed("Error", f"An error occurred: {str(e)}", discord.Color.red()))
+
+@bot.command()
+@is_admin_or_owner()
 async def replace(ctx, user: discord.User = None, amount_or_product: str = None, *args):
     try:
         if not user or not amount_or_product:
@@ -634,12 +659,12 @@ async def check_warr(ctx, user: discord.User, order_id: str):
             elif not vouch_found and not five_star_review:
                 await ctx.send(embed=create_embed("Action Required", f"You did not vouch or leave a 5-star review on Sellix. Please do both within 24 hours to activate your warranty:\n\n"
                                                                     f"1. **Vouch** with the following message in the designated channel:\n"
-                                                                    f"```+rep <@{config['OWNER_ID']}> {quantity} {product_title} ${total_price}```\n"
+                                                                    f"```+rep <@{config['OWNER_ID']}> {product_title} {quantity}x ${total_price}```\n"
                                                                     f"2. **Leave a 5-star review** [here](https://{config['SHOP_LINK']}/invoice/{order_id})", discord.Color.red()))
             elif not vouch_found:
                 await ctx.send(embed=create_embed("Vouch Required", f"You left a 5-star review on Sellix, but did not vouch in the proper format. "
                                                                     f"Please vouch with the following message within 24 hours to activate your warranty:\n\n"
-                                                                    f"```+rep <@{config['OWNER_ID']}> {quantity} {product_title} ${total_price}```", discord.Color.red()))
+                                                                    f"```+rep <@{config['OWNER_ID']}>  {product_title} {quantity}x ${total_price} ```", discord.Color.red()))
             elif not five_star_review:
                 await ctx.send(embed=create_embed("Review Required", f"You vouched in the proper format, but did not leave a 5-star review on Sellix. "
                                                                      f"Please leave a 5-star review within 24 hours to activate your warranty:\n\n"
@@ -652,6 +677,45 @@ async def check_warr(ctx, user: discord.User, order_id: str):
 
     except Exception as e:
         await ctx.send(embed=create_embed("Error", f"An unexpected error occurred: {str(e)}", discord.Color.red()))
+
+@bot.event
+async def on_guild_channel_delete(channel):
+    try:
+        if "🔁〢pending-" in channel.name:
+            tickets = load_json(config["TICKET_DIR"])
+
+            ticket_info = next((info for oid, info in tickets.items() if info['channel_id'] == channel.id), None)
+
+            if not ticket_info:
+                return
+
+            user = bot.get_user(ticket_info['user_id'])
+            if not user:
+                return
+       
+            transcript = await chat_exporter.export(channel, limit=1000) 
+
+            if transcript is None:
+                return 
+
+            transcript_file = discord.File(io.BytesIO(transcript.encode()), filename=f"{channel.name}_transcript.html")
+
+            dm_channel = user.dm_channel
+            if dm_channel is None:
+                dm_channel = await user.create_dm()
+
+            await dm_channel.send(file=transcript_file)
+            archive_channel = bot.get_channel(int(config["LOG_CHANNEL_ID"]))
+            if archive_channel:
+                await archive_channel.send(f"Ticket `{channel.name}` has been closed. Here is the transcript:", file=transcript_file)
+
+            tickets.pop(ticket_info['order_id'], None)
+            save_json(config["TICKET_DIR"], tickets)
+
+    except Exception as e:
+        print(f"An error occurred during channel deletion handling: {str(e)}")
+
+
 @tasks.loop(hours=1)
 async def scrape_products():
     try:
